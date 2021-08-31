@@ -76,10 +76,10 @@ function codepad.init(self, scenes)
 
 	-- send scenes to html
 	local scenes_json = rxi_json.encode(scenes)
-	html5.run(("codepad_ready('%s')"):format(escape.escape(scenes_json)))
+	html5.run(("window.$_codepad_$.onReady('%s')"):format(escape.escape(scenes_json)))
 
 	local engine_info = sys.get_engine_info()
-	html5.run(("document.getElementById('defold_version').innerHTML = 'Defold %s (%s)'"):format(engine_info.version, engine_info.version_sha1))
+	html5.run(("window.$_codepad_$.onEngineInfo('%s', '%s')"):format(engine_info.version, engine_info.version_sha1))
 end
 
 
@@ -126,38 +126,36 @@ function codepad.on_message(self, message_id, message, sender)
 end
 
 function codepad.check_change_scene()
-	local should_change_scene = html5.run('codepad_should_change_scene')
+	local should_change_scene = html5.run('window.$_codepad_$.params.changeScene')
 	if should_change_scene == "true" then
-		local scene = html5.run('codepad_get_scene()')
+		local scene = html5.run('window.$_codepad_$.params.scene')
 		codepad.restart(scene)
-		html5.run('codepad_should_change_scene = false;')
+		html5.run('window.$_codepad_$.params.changeScene = false;')
 	end
 end
 
 function codepad.check_should_reload()
-	local should_reload = html5.run('codepad_should_reload')
+	local should_reload = html5.run('window.$_codepad_$.params.reload')
 	if should_reload == "true" then
 		codepad.reload()
-		html5.run('codepad_should_reload = false;')
+		html5.run('window.$_codepad_$.params.reload = false;')
 	end
 end
 
 function codepad.check_should_restart()
-	local should_restart = html5.run('codepad_should_restart')
+	local should_restart = html5.run('window.$_codepad_$.params.restart')
 	if should_restart == "true" then
 		codepad.restart(codepad.current_cp)
-		html5.run('codepad_should_restart = false;')
+		html5.run('window.$_codepad_$.params.restart = false;')
 	end
 end
 
 function codepad.reload()
-	print("Reloading...")
 	codepad.get_external_code()
 	codepad.call_reload = true
 end
 
 function codepad.restart(scene)
-	print("Restarting...")
 	-- unload current pad and async load the cp again
 	if codepad.current_cp then
 		msg.post(codepad.current_cp, "unload")
@@ -184,7 +182,7 @@ function codepad.get_external_code()
 			on_reload = nil
 		}
 
-		local new_code = html5.run("codepad_get_code(" .. i .. ")")
+		local new_code = html5.run("window.$_codepad_$.params.code[" .. i .. "]")
 		new_code, err = loadstring(new_code, "=" .. tostring(codepad.scenes[codepad.current_cp].scripts[i].name))
 
 		if not new_code then
@@ -199,17 +197,17 @@ function codepad.get_external_code()
 			end
 			setfenv(new_code, temp_G)
 			new_code()
-			codepad.funcs[i].init = temp_G.init
+			if (temp_G.init ~= nil) codepad.funcs[i].init = temp_G.init
 			temp_G.init = nil
-			codepad.funcs[i].final = temp_G.final
+			if (temp_G.final ~= nil) codepad.funcs[i].final = temp_G.final
 			temp_G.final = nil
-			codepad.funcs[i].update = temp_G.update
+			if (temp_G.update ~= nil) codepad.funcs[i].update = temp_G.update
 			temp_G.update = nil
-			codepad.funcs[i].on_message = temp_G.on_message
+			if (temp_G.on_message ~= nil) codepad.funcs[i].on_message = temp_G.on_message
 			temp_G.on_message = nil
-			codepad.funcs[i].on_input = temp_G.on_input
+			if (temp_G.on_input ~= nil) codepad.funcs[i].on_input = temp_G.on_input
 			temp_G.on_input = nil
-			codepad.funcs[i].on_reload = temp_G.on_reload
+			if (temp_G.on_reload ~= nil) codepad.funcs[i].on_reload = temp_G.on_reload
 			temp_G.on_reload = nil
 
 			-- apply env to global env
@@ -269,7 +267,7 @@ print = function(...)
 		end
 
 		if html5 then
-			html5.run('codepad_update_console("' .. out .. '")')
+			html5.run('window.$_codepad_$.onLog("' .. out .. '")')
 		end
 	end
 end
