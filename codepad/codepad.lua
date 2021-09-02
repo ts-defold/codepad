@@ -1,3 +1,4 @@
+local json = require('poco.lua.support.dkjson')
 local rxi_json = require "codepad.utils.json"
 local escape = require "codepad.utils.escape"
 
@@ -82,7 +83,6 @@ function codepad.init(self, scenes)
 	html5.run(("window.$_codepad_$.onEngineInfo('%s', '%s')"):format(engine_info.version, engine_info.version_sha1))
 end
 
-
 -- update codepad with any changes from the html5 page
 function codepad.update(self, dt)
 	if codepad.call_reload then
@@ -122,13 +122,21 @@ end
 function codepad.on_message(self, message_id, message, sender)
 	if message_id == hash("proxy_loaded") then
 		msg.post(sender, "enable")
+
+		if html5 then
+			-- dump the scene on load
+			local view_proj = vmath.matrix4()
+			local data = poco_helper.dump(view_proj, view_proj);
+			local dump_json = json.encode(data)
+			html5.run(("window.$_codepad_$.onGraph('%s')"):format(escape.escape(dump_json)))
+		end
 	end
 end
 
 function codepad.check_change_scene()
 	local should_change_scene = html5.run('window.$_codepad_$.params.changeScene')
 	if should_change_scene == "true" then
-		local scene = html5.run('window.$_codepad_$.params.scene')
+		local scene = html5.run('window.$_codepad_$.data.scene')
 		codepad.restart(scene)
 		html5.run('window.$_codepad_$.params.changeScene = false;')
 	end
@@ -182,7 +190,7 @@ function codepad.get_external_code()
 			on_reload = nil
 		}
 
-		local new_code = html5.run("window.$_codepad_$.params.code[" .. i .. "]")
+		local new_code = html5.run("window.$_codepad_$.data.code[" .. i .. "]")
 		new_code, err = loadstring(new_code, "=" .. tostring(codepad.scenes[codepad.current_cp].scripts[i].name))
 
 		if not new_code then
@@ -197,17 +205,17 @@ function codepad.get_external_code()
 			end
 			setfenv(new_code, temp_G)
 			new_code()
-			if (temp_G.init ~= nil) codepad.funcs[i].init = temp_G.init
+			codepad.funcs[i].init = temp_G.init
 			temp_G.init = nil
-			if (temp_G.final ~= nil) codepad.funcs[i].final = temp_G.final
+			codepad.funcs[i].final = temp_G.final
 			temp_G.final = nil
-			if (temp_G.update ~= nil) codepad.funcs[i].update = temp_G.update
+			codepad.funcs[i].update = temp_G.update
 			temp_G.update = nil
-			if (temp_G.on_message ~= nil) codepad.funcs[i].on_message = temp_G.on_message
+			codepad.funcs[i].on_message = temp_G.on_message
 			temp_G.on_message = nil
-			if (temp_G.on_input ~= nil) codepad.funcs[i].on_input = temp_G.on_input
+			codepad.funcs[i].on_input = temp_G.on_input
 			temp_G.on_input = nil
-			if (temp_G.on_reload ~= nil) codepad.funcs[i].on_reload = temp_G.on_reload
+			codepad.funcs[i].on_reload = temp_G.on_reload
 			temp_G.on_reload = nil
 
 			-- apply env to global env

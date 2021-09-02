@@ -4,6 +4,7 @@ version = 0.1
 bundle_resources = /codepad/bundle_resources/
 bundle_exclude_resources = 
 custom_resources = main/scripts
+dependencies#0 = https://github.com/defold/extension-poco/archive/refs/tags/1.0.1.zip
 
 [bootstrap]
 main_collection = /main/main.collectionc
