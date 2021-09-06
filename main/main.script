@@ -1,12 +1,12 @@
 local codepad = require("codepad.codepad")
 
 local scene_sprite = require "main.codepads.sprite.sprite"
-local scene_two_gos = require "main.codepads.two_gos.two_gos"
+local scene_twin_logos = require "main.codepads.twin_logos.twin_logos"
 local scene_gui_nodes = require "main.codepads.gui_nodes.gui_nodes"
 local scene_factory = require "main.codepads.factory.factory"
 
 local scenes = {
-	scene_sprite, scene_two_gos, scene_gui_nodes, scene_factory
+	scene_sprite, scene_twin_logos, scene_gui_nodes, scene_factory
 }
 
 function init(self)
