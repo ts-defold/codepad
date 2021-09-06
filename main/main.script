@@ -11,6 +11,9 @@ local scenes = {
 
 function init(self)
 	msg.post("#", "acquire_input_focus")
+	msg.post("/main#debug", "disable")
+	self.show_fps = false;
+	
 	codepad.init(self, scenes)
 end
 
@@ -20,4 +23,19 @@ end
 
 function on_message(self, message_id, message, sender)
 	codepad.on_message(self, message_id, message, sender)
+
+	if message_id == hash("@toggle_fps") then
+		self.show_fps = not self.show_fps
+		if self.show_fps then
+			msg.post("/main#debug", "enable")
+		else
+			msg.post("/main#debug", "disable")
+		end
+	end
+end
+
+function on_input(self, action_id, action)
+	if action_id == hash("key_f") and action.pressed then
+		msg.post(".", "@toggle_fps")
+	end
 end

@@ -1,0 +1,35 @@
+local fps = require "metrics.fps"
+local mem = require "metrics.mem"
+
+local fps_format = "FPS %.2f"
+local mem_format = "MEM %dkb"
+local bad = vmath.vector3(1, 0, 0, 1);
+local good = vmath.vector3(0, 1, 0, 1);
+
+function init(self)
+	self.metrics = {
+		fps = fps.create(),
+		mem = mem.create()
+	};
+
+	self.fps_node = gui.get_node("fps")
+	self.mem_node = gui.get_node("mem")
+end
+
+function update(self, dt)
+	-- update metrics
+	self.metrics["fps"].update()
+	self.metrics["mem"].update()
+
+	local fps = self.metrics["fps"].fps()
+	gui.set_text(self.fps_node, fps_format:format(fps))
+	gui.set_color(self.fps_node, vmath.lerp(math.max(0, math.min(60, fps)) / 60, bad, good))
+
+	local mem = self.metrics["mem"].mem()
+	gui.set_text(self.mem_node, mem_format:format(mem))
+	gui.set_color(self.mem_node, vmath.lerp(math.max(0, math.min(10000, mem)) / 10000, good, bad))
+end
+
+function on_message(self, message_id, message, sender)
+
+end
